@@ -25,3 +25,8 @@ int32_t FMix_Play(Mix_Chunk* chunk) {
 int32_t FMix_Init(int32_t flags) {
   return Mix_Init(flags);
 }
+
+int32_t FMix_Quit() {
+  Mix_Quit();
+  return Mix_Init(0);
+}

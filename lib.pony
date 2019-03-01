@@ -26,6 +26,9 @@ primitive FMix
   fun play(chunk: MixChunk): Bool =>
     @FMix_Play[I32](chunk) == 0
 
+  fun quit(): I32 =>
+    @FMix_Quit[I32]()
+
 primitive FMixErrInvalidChunk
   fun apply(): I32 => 0x40000001
 

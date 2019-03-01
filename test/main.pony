@@ -18,3 +18,5 @@ actor Main
 
 class Notify is TimerNotify
   fun apply(timer: Timer, count: U64): Bool => false
+    FMix.quit()
+    false
