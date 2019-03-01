@@ -1,0 +1,17 @@
+#ifndef FLATTEN_H
+#define FLATTEN_H
+
+#include <stdlib.h>
+#include <inttypes.h>
+#include <stdio.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_mixer.h>
+#include <SDL2/SDL_audio.h>
+
+#define FMIX_ERR_INVALID_CHUNK (0x40000001)
+
+void test();
+Mix_Chunk* FMix_Read(char* file);
+int32_t FMix_Play(Mix_Chunk* chunk);
+
+#endif

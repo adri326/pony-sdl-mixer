@@ -1,0 +1,6 @@
+[submodule "cmake"]
+	path = cmake
+	url = https://github.com/LambdAurora/cmm
+[submodule "sdl2"]
+	path = sdl2
+	url = https://github.com/adri326/pony-sdl2
