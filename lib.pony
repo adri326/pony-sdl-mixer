@@ -39,8 +39,7 @@ primitive FMix
     @FMix_CloseAudio[None]()
 
   fun allocate_channels(n: I32): Bool =>
-    let res = @FMix_AllocateChannels[I32](n) == 0
-    res
+    @FMix_AllocateChannels[I32](n) == 0
 
   fun allocated_channels(): I32 =>
     @FMix_AllocatedChannels[I32]()
@@ -71,12 +70,10 @@ primitive FMix
     if not chunk.is_null() then FMixChunk(chunk) end
 
   fun play(chunk: FMixChunk): Bool =>
-    let res = @FMix_Play[I32](chunk._get_raw()) == 0
-    res
+    @FMix_Play[I32](chunk._get_raw()) == 0
 
   fun quit(): I32 =>
-    let res = @FMix_Quit[I32]()
-    res
+    @FMix_Quit[I32]()
 
   fun is_played(chunk: MixChunkRaw box): Bool =>
     var n = I32(0)
