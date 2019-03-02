@@ -99,11 +99,11 @@ Mix_Chunk* FMix_Read(char* file) {
   return Mix_LoadWAV_RW(rw_ops, 1);
 }
 
-// plays a chunk in the first available channel
-int32_t FMix_Play(Mix_Chunk* chunk) {
+// plays a chunk in the first available channel or in the nth channel
+int32_t FMix_Play(Mix_Chunk* chunk, int32_t channel) {
   if (chunk == NULL) return FMIX_ERR_INVALID_CHUNK;
-  int32_t res = Mix_PlayChannel(-1, chunk, 0);
-  if (res != -1) {
+  int32_t res = Mix_PlayChannel(channel, chunk, 0);
+  if (res >= 0 && res < _chunks_length) {
     _chunks[res]->chunk = chunk;
     _chunks[res]->garbage = false;
     _chunks[res]->playing = true;
@@ -142,13 +142,18 @@ int32_t FMix_Quit() {
 
 // allocated n mixer channel
 int32_t FMix_AllocateChannels(int32_t n) {
+  int32_t res =  Mix_AllocateChannels(n);
   _FMix_UpdateStaticChunksLength();
-  return Mix_AllocateChannels(n) != n;
+  return res != n;
 }
 
 // returns the amount of allocated channels
 int32_t FMix_AllocatedChannels() {
   return Mix_AllocateChannels(-1);
+}
+
+int32_t FMix_Playing(int32_t channel) {
+  return Mix_Playing(channel);
 }
 
 // sets the volume for a channel
@@ -181,6 +186,12 @@ Mix_Chunk* FMix_GetChunkStatic(int32_t channel) {
   if (channel < _chunks_length && channel >= 0) {
     return _chunks[channel]->chunk;
   } else return NULL;
+}
+
+int8_t FMix_IsChannelPlaying(int32_t channel) {
+  if (channel < _chunks_length && channel >= 0) {
+    return _chunks[channel]->playing;
+  } else return false;
 }
 
 // the channel handler for this program

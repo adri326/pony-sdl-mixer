@@ -7,13 +7,16 @@ use "time"
 actor Main
   new create(env: Env) =>
     log_versions(env)
+    let nonce = I32(1)
     try
+      // we init our stuff!
       SDL.init([SDLInitAudio])?
-      FMix.init(0x10)?
-
+      FMix.init([FMixInitOGG])?
       FMix.open_audio((44100, 256), 2)?
-      let specs = FMix.query_spec()
-      match specs
+      FMix.allocate_channels(100) // we'll need a lot of them! They're very cheap anyways
+
+      // just some logging, for the sake of it
+      match FMix.query_spec()
       | let specs': FMixQuerySpec => env.out.print(
         "Allocated "
         + specs'.channels.string()
@@ -22,19 +25,14 @@ actor Main
         + "Hz\n")
       end
 
-      env.out.print("Let's load your file! 🐺")
-      let chunk = FMix.read("../resources/sound.ogg")
-      match chunk
-      | let chunk': FMixChunk =>
-        env.out.print("Successfully loaded it, so let's play it! 🦊")
-        if not FMix.play(chunk') then error end
-        chunk'.final()
-      else error
+      // Let's load your file! 🐺
+
+      match recover val FMix.read_chunk("../resources/sound.ogg") end
+      | let chunk': FMixChunk val =>
+        let notifier = Notify(chunk', nonce)
+        Timers()(Timer(consume notifier, 150_000_000, 150_000_000))
+      else env.out.print("Oops")
       end
-
-      // env.out.print(FMix.set_volume(32, 128).string())
-
-      Timers()(Timer(Notify, 15_000_000_000))
     else env.out.print("Error: " + SDL.get_error())
     end
 
@@ -58,7 +56,25 @@ actor Main
     )
 
 class Notify is TimerNotify
-  fun apply(timer: Timer, count: U64): Bool => false
-    FMix.close_audio()
-    FMix.quit()
-    false
+  var times: I32 = 0
+  let chunk: FMixChunk val
+  let nonce: I32
+
+  new iso create(chunk': FMixChunk val, nonce': I32) =>
+    chunk = chunk'
+    nonce = nonce'
+
+  fun ref apply(timer: Timer, count: U64): Bool =>
+    times = times + 1
+    if times > nonce then
+      if chunk.is_played() then
+        true
+      else
+        FMix.close_audio()
+        FMix.quit()
+        false
+      end
+    else
+      chunk.play()
+      true
+    end

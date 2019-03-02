@@ -28,7 +28,7 @@ void FMix_LinkedVersion(int32_t* major, int32_t* minor, int32_t* patch);
 
 int32_t FMix_OpenAudio(int32_t freq, int32_t chunksize, uint16_t format, int32_t channels);
 Mix_Chunk* FMix_Read(char* file);
-int32_t FMix_Play(Mix_Chunk* chunk);
+int32_t FMix_Play(Mix_Chunk* chunk, int32_t channel);
 
 int32_t FMix_AllocateChannels(int32_t n);
 int32_t FMix_AllocatedChannels();
