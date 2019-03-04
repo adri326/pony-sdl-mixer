@@ -3,6 +3,28 @@
 static FMix_Status** _chunks = NULL;
 static size_t _chunks_length = 0;
 
+static FMix_EventHandler** _evt_handlers = NULL;
+static size_t _evt_handlers_length = 0;
+static FMix_Event* last_event = NULL;
+
+// init FMix
+int32_t FMix_Init(int32_t flags) {
+  Mix_ChannelFinished(&_FMix_ChannelHandler);
+  _evt_handlers = (FMix_EventHandler**)malloc(sizeof(FMix_EventHandler*) * 256);
+  _evt_handlers_length = 256;
+  for (size_t n = 0; n < _evt_handlers_length; n++) {
+    _evt_handlers[n] = NULL;
+  }
+
+  last_event = (FMix_Event*)malloc(sizeof(FMix_Event));
+  last_event->channel = 0;
+  last_event->kind = FMIX_EVENT_NULL;
+  last_event->index = 0;
+  last_event->next = NULL;
+
+  return Mix_Init(flags);
+}
+
 // sets the ChannelFinished handler
 void _FMix_SetChannelFinished(void (*fn)(int channel)) {
   Mix_ChannelFinished(fn);
@@ -128,12 +150,6 @@ void FMix_FreeChunk(Mix_Chunk* chunk) {
   }
 }
 
-// init FMix
-int32_t FMix_Init(int32_t flags) {
-  Mix_ChannelFinished(&_FMix_ChannelHandler);
-  return Mix_Init(flags);
-}
-
 // quit FMix
 int32_t FMix_Quit() {
   Mix_Quit();
@@ -202,4 +218,93 @@ static void _FMix_ChannelHandler(int channel) {
       FMix_FreeChunk(_chunks[channel]->chunk);
     }
   }
+  FMix_CreateEvent(channel, FMIX_EVENT_CHANNEL_FINISHED);
+}
+
+// create a new event and append it to the linked list
+void FMix_CreateEvent(int32_t channel, int32_t kind) {
+  FMix_Event* n_last_event = (FMix_Event*)malloc(sizeof(FMix_Event));
+  n_last_event->channel = channel;
+  n_last_event->kind = kind;
+  n_last_event->index = last_event->index + 1;
+  n_last_event->next = NULL;
+  last_event->next = n_last_event;
+  last_event = n_last_event;
+}
+
+void FMix_RegisterEventHandler(size_t uid) {
+  // printf("> %p\n", listener);
+  for (size_t n = 0; n < _evt_handlers_length; n++) {
+    if (_evt_handlers[n] == NULL) {
+      _evt_handlers[n] = (FMix_EventHandler*)malloc(sizeof(FMix_EventHandler));
+      _evt_handlers[n]->uid = uid;
+      _evt_handlers[n]->last_event = last_event;
+      return;
+    }
+  }
+
+  // allocate more memory
+  size_t n_evt_handlers_length = _evt_handlers_length + 256;
+  FMix_EventHandler** n_evt_handlers = (FMix_EventHandler**)malloc(sizeof(FMix_EventHandler*) * n_evt_handlers_length);
+  for (size_t n = 0; n < _evt_handlers_length; n++) {
+    n_evt_handlers[n] = _evt_handlers[n];
+  }
+  for (size_t n = _evt_handlers_length + 1; n < n_evt_handlers_length; n++) {
+    n_evt_handlers[n] = NULL;
+  }
+
+  // create a write new event handler
+  n_evt_handlers[_evt_handlers_length] = (FMix_EventHandler*)malloc(sizeof(FMix_EventHandler));
+  n_evt_handlers[_evt_handlers_length]->uid = uid;
+  n_evt_handlers[_evt_handlers_length]->last_event = last_event;
+
+  // overwrite the old event handler
+  FMix_EventHandler** old_evt_handlers = _evt_handlers;
+  _evt_handlers = n_evt_handlers;
+  _evt_handlers_length = n_evt_handlers_length;
+  free(old_evt_handlers);
+}
+
+// NOTE: this might be error-prone
+void FMix_DestroyHandler(size_t uid) {
+  for (size_t n = 0; n < _evt_handlers_length; n++) {
+    if (_evt_handlers[n] != NULL && _evt_handlers[n]->uid == uid) {
+      FMix_Event* event = _evt_handlers[n]->last_event;
+      free(_evt_handlers[n]);
+      _evt_handlers[n] = NULL;
+      while (event != NULL) {
+        FMix_Event* old_event = event;
+        event = event->next;
+        FMix_FreeEvent(old_event);
+      }
+    }
+  }
+}
+
+// 0 means no new event, the data you just got is the previous event, 1 means that the event fetched is the last one, 2 means that there are more events coming up
+int8_t FMix_CheckoutEvent(size_t uid, int32_t* channel, int32_t* kind) {
+  for (size_t n = 0; n < _evt_handlers_length; n++) {
+    if (_evt_handlers[n] != NULL && _evt_handlers[n]->uid == uid) {
+      FMix_EventHandler* handler = _evt_handlers[n];
+      FMix_Event* event = handler->last_event;
+      if (event->next != NULL) {
+        *channel = event->next->channel;
+        *kind = event->next->kind;
+        handler->last_event = event->next;
+        FMix_FreeEvent(event);
+        return 1;
+      }
+      else return 0;
+    }
+  }
+}
+
+// attempt to free an event; nothing will be done if it could still be read by a handler
+void FMix_FreeEvent(FMix_Event* evt) {
+  if (evt == NULL) return;
+  for (size_t n = 0; n < _evt_handlers_length; n++) {
+    // if an event handler is behind the current event: do not free
+    if (_evt_handlers[n] != NULL && _evt_handlers[n]->last_event->index <= evt->index) return;
+  }
+  free(evt);
 }

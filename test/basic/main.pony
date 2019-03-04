@@ -1,4 +1,4 @@
-use "../../"
+use "../../pony-sdl-mixer"
 use "../../sdl2"
 use "time"
 

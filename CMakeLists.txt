@@ -24,7 +24,11 @@ install(
 
 file(MAKE_DIRECTORY test)
 
-add_custom_target(test
+add_custom_target(test.basic
   ponyc ../test/basic -o test;
+  DEPENDS pony_sdl_mixer_c
+)
+add_custom_target(test.listener
+  ponyc ../test/listener -o test;
   DEPENDS pony_sdl_mixer_c
 )

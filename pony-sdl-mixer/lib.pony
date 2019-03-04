@@ -1,4 +1,4 @@
-use "path:build"
+use "path:../build"
 use "lib:pony_sdl_mixer_c"
 use "debug"
 
@@ -34,6 +34,7 @@ class Notify is TimerNotify
     false
   ```
   """
+
   fun init(flags: (Array[FMixInitFlag] | FMixInitFlag | I32) = 0x58)? =>
     """
     Initialises the SDL_mixer module: this loads different submodules (OGG, MP3, etc) based on the flags given.
