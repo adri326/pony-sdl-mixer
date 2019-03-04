@@ -22,7 +22,9 @@ install(
   INCLUDES DESTINATION include
 )
 
+file(MAKE_DIRECTORY test)
+
 add_custom_target(test
-  ponyc ../test
+  ponyc ../test/basic -o test;
   DEPENDS pony_sdl_mixer_c
 )

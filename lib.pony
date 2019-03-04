@@ -1,4 +1,4 @@
-use "path:../build"
+use "path:build"
 use "lib:pony_sdl_mixer_c"
 use "debug"
 
