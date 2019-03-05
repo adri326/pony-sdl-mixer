@@ -52,6 +52,7 @@ class Notify is TimerNotify
     | let flag: FMixInitFlag => flag()
     | let flags'': I32 => flags''
     end
+    @_FMix_SetEventHandler[None](addressof FMixEventHandler.event_handler)
     if @FMix_Init[I32](flags) == -1 then
       error
     end

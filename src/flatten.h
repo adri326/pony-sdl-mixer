@@ -17,21 +17,7 @@ struct FMix_Status {
 
 typedef struct FMix_Status FMix_Status;
 
-struct FMix_Event {
-  int32_t channel;
-  int32_t kind;
-  uint64_t index;
-  struct FMix_Event* next;
-};
-
-typedef struct FMix_Event FMix_Event;
-
-struct FMix_EventHandler {
-  size_t uid;
-  FMix_Event* last_event;
-};
-
-typedef struct FMix_EventHandler FMix_EventHandler;
+typedef void FMix_EventHandler;
 
 
 #define FMIX_ERR_INVALID_CHUNK (0x40000001)
@@ -63,9 +49,7 @@ void FMix_FreeChunk(Mix_Chunk* chunk);
 static void _FMix_ChannelHandler(int channel);
 
 void FMix_CreateEvent(int32_t channel, int32_t kind);
-void FMix_RegisterEventHandler(size_t uid);
-void FMix_DestroyHandler(size_t uid);
-int8_t FMix_CheckoutEvent(size_t uid, int32_t* channel, int32_t* kind);
-void FMix_FreeEvent(FMix_Event* evt);
+void FMix_RegisterEventHandler(void* handler);
+void FMix_DestroyHandler(void* handler);
 
 #endif
