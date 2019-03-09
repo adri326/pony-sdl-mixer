@@ -250,14 +250,18 @@ class FMixChunk
     Whether or not the chunk is being played in any *mixer* channel.
     """
     var n = I32(0)
-    let length = FMix.allocated_channels()
-    while n < length do
+    let n_channels = FMix.allocated_channels()
+    while n < n_channels do
       if (@FMix_GetChunkStatic[MixChunkRaw](n) == _raw) and (@FMix_IsChannelPlaying[I8](n) == 1) then
         return true
       end
       n = n + 1
     end
     false
+
+  fun length(): (U32 | None) =>
+    let l = @FMix_GetChunkLength[I32](_raw)
+    if l == -1 then None else l.u32() end
 
   fun _final() =>
     """

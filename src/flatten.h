@@ -68,4 +68,6 @@ void FMix_DestroyHandler(size_t uid);
 int8_t FMix_CheckoutEvent(size_t uid, int32_t* channel, int32_t* kind);
 void FMix_FreeEvent(FMix_Event* evt);
 
+int32_t FMix_GetChunkLength(Mix_Chunk* chunk);
+
 #endif
