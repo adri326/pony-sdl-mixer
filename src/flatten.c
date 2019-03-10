@@ -311,9 +311,25 @@ void FMix_FreeEvent(FMix_Event* evt) {
 
 int32_t FMix_GetChunkLength(Mix_Chunk* chunk) {
   int freq;
-  int format;
+  uint16_t format;
   int channels;
   if (Mix_QuerySpec(&freq, &format, &channels) == 0) return -1;
+
+
+  uint64_t bytesize = 4;
+  switch (format) {
+    case AUDIO_U8:
+    case AUDIO_S8:
+      bytesize = 1;
+      break;
+    case AUDIO_U16LSB:
+    case AUDIO_S16LSB:
+    case AUDIO_U16MSB:
+    case AUDIO_S16MSB:
+      bytesize = 2;
+      break;
+  }
+
   uint32_t alen = chunk->alen;
   return (uint32_t)((uint64_t)alen * 1000 / freq / 4);
 }
