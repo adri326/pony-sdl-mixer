@@ -20,7 +20,7 @@ actor Main
     match recover val FMix.read_chunk("../resources/sound.ogg") end
     | let chunk: FMixChunk val =>
       chunk.play()
-      let handler = FMixEventHandler()
+      let handler = FMixEventHandler
       handler(Listener(env, chunk))
     else env.out.print("Error reading file!")
     end

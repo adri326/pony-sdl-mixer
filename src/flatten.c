@@ -3,6 +3,11 @@
 static FMix_Status** _chunks = NULL;
 static size_t _chunks_length = 0;
 
+static FMix_EventHandler** _evt_handlers = NULL;
+static size_t _evt_handlers_length = 0;
+
+static void (*event_handler)(void* handler, int32_t channel, int32_t kind) = NULL;
+
 // init FMix
 int32_t FMix_Init(int32_t flags) {
   Mix_ChannelFinished(&_FMix_ChannelHandler);
@@ -13,6 +18,15 @@ int32_t FMix_Init(int32_t flags) {
   }
 
   return Mix_Init(flags);
+}
+
+// sets the ChannelFinished handler
+void _FMix_SetChannelFinished(void (*fn)(int channel)) {
+  Mix_ChannelFinished(fn);
+}
+
+void _FMix_SetEventHandler(void (*fn)(void* handler, int32_t channel, int32_t kind)) {
+  event_handler = fn;
 }
 
 // returns the compiled version of SDL_mixer
@@ -203,7 +217,55 @@ static void _FMix_ChannelHandler(int channel) {
       FMix_FreeChunk(_chunks[channel]->chunk);
     }
   }
-  // here: call dispatcher
+  FMix_DispatchEvent(channel, FMIX_EVENT_CHANNEL_FINISHED);
+}
+
+void FMix_DispatchEvent(int32_t channel, int32_t kind) {
+  pony_register_thread();
+  if (event_handler == NULL) return;
+  for (size_t n = 0; n < _evt_handlers_length; n++) {
+    if (_evt_handlers[n] != NULL) {
+      event_handler(_evt_handlers[n], channel, kind);
+    }
+  }
+}
+
+void FMix_RegisterEventHandler(void* handler) {
+  // printf("> %p\n", listener);
+  for (size_t n = 0; n < _evt_handlers_length; n++) {
+    if (_evt_handlers[n] == NULL) {
+      _evt_handlers[n] = handler;
+      return;
+    }
+  }
+
+  // allocate more memory
+  size_t n_evt_handlers_length = _evt_handlers_length + 256;
+  FMix_EventHandler** n_evt_handlers = (FMix_EventHandler**)malloc(sizeof(FMix_EventHandler*) * n_evt_handlers_length);
+  for (size_t n = 0; n < _evt_handlers_length; n++) {
+    n_evt_handlers[n] = _evt_handlers[n];
+  }
+  for (size_t n = _evt_handlers_length + 1; n < n_evt_handlers_length; n++) {
+    n_evt_handlers[n] = NULL;
+  }
+
+  // create a write new event handler
+  n_evt_handlers[_evt_handlers_length] = handler;
+
+  // overwrite the old event handler
+  FMix_EventHandler** old_evt_handlers = _evt_handlers;
+  _evt_handlers = n_evt_handlers;
+  _evt_handlers_length = n_evt_handlers_length;
+  free(old_evt_handlers);
+}
+
+// NOTE: this might be error-prone
+void FMix_DestroyHandler(void* handler) {
+  for (size_t n = 0; n < _evt_handlers_length; n++) {
+    if (_evt_handlers[n] == handler) {
+      _evt_handlers[n] = NULL;
+    }
+  }
 }
 
 int32_t FMix_GetChunkLength(Mix_Chunk* chunk) {
