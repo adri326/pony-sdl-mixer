@@ -12,6 +12,8 @@ primitive FMix
   Once your program is done, you should first close the audio interface, then quit FMix (optionally also quit SDL2).
 
   ```pony
+use "pony-sdl-mixer"
+use "time"
 actor Main
   new create(env: Env) =>
     try
@@ -34,6 +36,18 @@ class Notify is TimerNotify
     false
   ```
   """
+
+  fun init_sdl()? =>
+    """
+    This is an alternative to doing `SDL.init([...; SDLInitAudio])?`
+    """
+    if @FMix_InitSDL[I32]() != 0 then error end
+
+  fun get_error(): String =>
+    """
+    This is an alternative to doing `SDL.get_error()`.
+    """
+    recover String.from_cstring(@FMix_GetError[Pointer[U8 val]]()) end
 
   fun init(flags: (Array[FMixInitFlag] | FMixInitFlag | I32) = 0x58)? =>
     """

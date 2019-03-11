@@ -25,6 +25,9 @@ typedef void FMix_EventHandler;
 #define FMIX_EVENT_NULL -1
 #define FMIX_EVENT_CHANNEL_FINISHED 1
 
+int32_t FMix_InitSDL();
+const char* FMix_GetError();
+
 int32_t FMix_Init(int32_t flags);
 int32_t FMix_Quit();
 void _FMix_UpdateStaticChunksLength();

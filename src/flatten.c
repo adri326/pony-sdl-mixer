@@ -20,6 +20,14 @@ int32_t FMix_Init(int32_t flags) {
   return Mix_Init(flags);
 }
 
+int32_t FMix_InitSDL() {
+  return SDL_Init(SDL_INIT_AUDIO);
+}
+
+const char* FMix_GetError() {
+  return SDL_GetError();
+}
+
 // sets the ChannelFinished handler
 void _FMix_SetChannelFinished(void (*fn)(int channel)) {
   Mix_ChannelFinished(fn);

@@ -1,5 +1,4 @@
 use "../../pony-sdl-mixer"
-use "../../sdl2"
 
 actor Main
   let env: Env
@@ -10,12 +9,12 @@ actor Main
     """
     env = env'
     try
-      SDL.init([SDLInitAudio])?
+      FMix.init_sdl()?
       FMix.init()?
       FMix.open_audio((44100, 512), 2)?
       next()
     else
-      env.out.print("Error: " + SDL.get_error())
+      env.out.print("Error: " + FMix.get_error())
     end
 
   fun ref next() =>
