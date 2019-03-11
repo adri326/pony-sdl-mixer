@@ -221,6 +221,7 @@ static void _FMix_ChannelHandler(int channel) {
 }
 
 void FMix_DispatchEvent(int32_t channel, int32_t kind) {
+  pony_register_thread();
   if (event_handler == NULL) return;
   for (size_t n = 0; n < _evt_handlers_length; n++) {
     if (_evt_handlers[n] != NULL) {

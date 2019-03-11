@@ -8,6 +8,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_mixer.h>
 #include <SDL2/SDL_audio.h>
+#include <pony.h>
 
 struct FMix_Status {
   Mix_Chunk* chunk;
@@ -51,5 +52,6 @@ static void _FMix_ChannelHandler(int channel);
 void FMix_CreateEvent(int32_t channel, int32_t kind);
 void FMix_RegisterEventHandler(void* handler);
 void FMix_DestroyHandler(void* handler);
+void FMix_DispatchEvent(int32_t channel, int32_t kind);
 
 #endif
