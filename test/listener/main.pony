@@ -1,11 +1,13 @@
 use "../../pony-sdl-mixer"
 use "../../sdl2"
-use "time"
 
 actor Main
   let env: Env
 
   new create(env': Env) =>
+    """
+    Here we initialize SDL and FMix
+    """
     env = env'
     try
       SDL.init([SDLInitAudio])?
@@ -17,6 +19,9 @@ actor Main
     end
 
   fun ref next() =>
+    """
+    Called once everything has been initialized
+    """
     match recover val FMix.read_chunk("../resources/sound.ogg") end
     | let chunk: FMixChunk val =>
       chunk.play()
@@ -26,6 +31,10 @@ actor Main
     end
 
 class Listener is FMixListener
+  """
+  This class will be used to listen for the events
+  """
+
   let env: Env
   let chunk: FMixChunk val
   var n: I32 = 0
@@ -36,13 +45,16 @@ class Listener is FMixListener
     chunk = chunk'
 
   fun ref apply(event: FMixEventHelper val) =>
-    if FMix.channels_playing() == 0 then
-      if n < max_n then
-        n = n + 1
-        env.out.print("Playing your sound again")
-        chunk.play()
-      else
-        env.out.print("Done playing!")
-        event.handler.stop()
+    // check if the kind of event is what we are looking for: channel finished events
+    if event.kind is FMixEventChannelFinished then
+      if FMix.channels_playing() == 0 then
+        if n < max_n then
+          n = n + 1
+          env.out.print("Playing your sound again")
+          chunk.play()
+        else
+          env.out.print("Done playing!")
+          event.handler.dispose()
+        end
       end
     end

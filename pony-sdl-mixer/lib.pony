@@ -89,7 +89,7 @@ class Notify is TimerNotify
 
   fun close_audio() =>
     """
-    Does the opposite of the `open_audio` method. It is recommended to do that once you do not need the audio interface anymore.
+    Does the opposite of the `open_audio` method. It is recommended to do that once you do not need the audio interface anymore, so that the operating system can reclaim it.
     """
     @FMix_CloseAudio[None]()
 
@@ -165,7 +165,7 @@ class Notify is TimerNotify
     Reads a file as a FMixChunk
     """
     let chunk = @FMix_Read[MixChunkRaw](file.cpointer())
-    if not chunk.is_null() then FMixChunk(chunk) end
+    if not chunk.is_null() then FMixChunk._create(chunk) end
 
   fun quit(): I32 =>
     """
@@ -196,7 +196,7 @@ type FMixInitFlag is (FMixInitFLAC | FMixInitMOD | FMixInitMP3 | FMixInitOGG | F
 class FMixQuerySpec
   """
   The specifications of the oppened audio interface: frequency, format, channels and how many times has it been open in the program.
-  This behavior comes from the fact that you can [open an audio interface several times](https://www.libsdl.org/projects/SDL_mixer/docs/SDL_mixer.html#SEC11).
+  Note that you can [open an audio interface several times](https://www.libsdl.org/projects/SDL_mixer/docs/SDL_mixer.html#SEC11), which is why this function returns you the number of opens.
   """
   let frequency: I32
   let format: U16
@@ -211,13 +211,16 @@ class FMixQuerySpec
 
 primitive _MixChunkRaw
 type MixChunkRaw is Pointer[_MixChunkRaw]
+  """
+  The internal Mix_Chunk type, translated in pony
+  """
 
 class FMixChunk
   """
   A slice of sound. This is a wrapper around the internal Mix_Chunk type.
   """
   let _raw: MixChunkRaw ref
-  new create(raw: MixChunkRaw ref) =>
+  new _create(raw: MixChunkRaw ref) =>
     _raw = consume raw
 
   fun ref set_volume(volume: I32) =>
@@ -261,6 +264,12 @@ class FMixChunk
     false
 
   fun length(): (U32 | None) =>
+    """
+    Returns the length of the chunk, in milliseconds.
+    The length is not included by default in SDL_mixer, so this method actually calculates it based on your card's specs, against which the chunk should have been converted.
+
+    *This feature is experimental. If your setup gives you incoherent values, notify me!*
+    """
     let l = @FMix_GetChunkLength[I32](_raw)
     if l == -1 then None else l.u32() end
 
